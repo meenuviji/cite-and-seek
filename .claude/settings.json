@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/evaluation/questions/**)",
+      "Edit(/evaluation/synthetic_incidents/**)",
+      "Read(/evaluation/questions/golden_set.json)"
+    ]
+  }
+}
