@@ -30,8 +30,10 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 **Status:** accepted
 
 ## 6. Baseline chunking
-**Decision:** Fixed-size chunks of about 200 MiniLM tokens, no overlap, applied to all file types. Each chunk carries its source path and line range, in the same path format `golden_set.json` uses (relative to `corpus/`).
-**Rationale:** The size is set by the embedding model's 256-token input limit, not by tuning. Matching the golden set's path format lets recall@k be computed in v0.2.
+**Decision:** Fixed-size chunks of about 200 MiniLM tokens, no overlap, applied to all file types. Each chunk carries its line range, `corpus_path` (relative to `corpus/`), and `source_path` (the upstream repo path). Citations display `source_path`. The corpus-to-upstream mapping is the explicit table in `src/cite_and_seek/path_map.py`, derived from the code itself (import statements) and from upstream config at a pinned commit (`alembic.ini`, root file listing), never from the golden set.
+**Rationale:** The size is set by the embedding model's 256-token input limit, not by tuning. Carrying both path forms lets recall@k be computed in v0.2 against golden paths written in either form (see decision 13).
+**Amended:** originally a single path relative to `corpus/`. The owner's check found golden paths in both upstream (`app/…`) and corpus-relative (`code/…`) forms.
+**Corpus coverage:** `app/database.py` and `app/redis_client.py` are imported by the code but absent from the corpus. The owner checked that the golden set references `database.py` 0 times and `redis_client` once, in an unanswerable question, so its absence is intended and correct.
 **Status:** accepted
 
 ## 7. Smoke testing
@@ -64,6 +66,11 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 **Decision:** Not yet run. v0.3 candidate: test chunk sizes at or below 128 tokens against the 200-token baseline (decision 6).
 **Rationale:** `all-MiniLM-L6-v2` was trained on 128-token sequences; the 256-token input limit does not mean longer inputs embed well.
 **Status:** pending
+
+## 13. Grader path normalization
+**Decision:** In v0.2, the grader normalizes every path on both sides before comparing: strip a leading `./` and `corpus/`, then map through the committed table (`src/cite_and_seek/path_map.py`) to one canonical form. It reports counts only: how many golden paths needed normalization, and how many failed to map. Any failed mapping stops the run.
+**Rationale:** Golden paths appear in upstream, corpus-relative, `corpus/`-prefixed, and `./` forms. Comparing without normalization would score correct retrievals as misses.
+**Status:** accepted
 
 ## Leakage controls
 Each control lists its status and the point where it is implemented.
