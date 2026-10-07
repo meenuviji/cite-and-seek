@@ -9,6 +9,7 @@
       "Edit(/evaluation/README.md)",
       "Read(/.env)",
       "Read(/.env.*)",
+      "Read(/reports/**)",
       "Bash(git show)",
       "Bash(git show *)",
       "Bash(git -C * show *)",
