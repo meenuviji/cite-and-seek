@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-cite-and-seek = "cite_and_seek:main"
+cite-and-seek = "cite_and_seek.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13.0"]
