@@ -7,6 +7,8 @@
       "Read(/evaluation/questions/golden_set.json)",
       "Read(/evaluation/README.md)",
       "Edit(/evaluation/README.md)",
+      "Read(/.env)",
+      "Read(/.env.*)",
       "Bash(git show)",
       "Bash(git show *)",
       "Bash(git -C * show *)",

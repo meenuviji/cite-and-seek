@@ -47,9 +47,11 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 **Status:** accepted
 
 ## 9. Generation LLM
-**Decision:** Not yet chosen.
-**Rationale:** Needs a human-approved comparison of cost, latency, operational burden, and lock-in risk, per CLAUDE.md.
-**Status:** pending
+**Decision:** `claude-haiku-4-5-20251001` via the Anthropic API, temperature 0, pinned model ID.
+**Rationale:** Abstention is a headline metric and requires strong instruction-following under uncertainty. A small model keeps retrieval failures visible in the metrics. The pinned ID and stable limits make runs reproducible.
+**Comparison:** Done by the owner, as CLAUDE.md requires. Alternatives considered: a GPT-class small model (comparable, no advantage here); Gemini Flash free tier (rate limits and unpinned aliases hurt reproducibility for repeated eval runs); a local model via Ollama (weaker abstention would confound the headline metric).
+**Secrets:** The API key lives in `.env`, created by the owner. Claude never reads, prints, or echoes `.env` or its contents; code loads it with python-dotenv at runtime only.
+**Status:** accepted
 
 ## 10. README count discrepancy
 **Decision:** Not yet resolved. `evaluation/README.md` is left unchanged while the discrepancy is reviewed.
@@ -70,6 +72,16 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 ## 13. Grader path normalization
 **Decision:** In v0.2, the grader normalizes every path on both sides before comparing: strip a leading `./` and `corpus/`, then map through the committed table (`src/cite_and_seek/path_map.py`) to one canonical form. It reports counts only: how many golden paths needed normalization, and how many failed to map. Any failed mapping stops the run.
 **Rationale:** Golden paths appear in upstream, corpus-relative, `corpus/`-prefixed, and `./` forms. Comparing without normalization would score correct retrievals as misses.
+**Status:** accepted
+
+## 14. LLM judge
+**Decision:** Implemented in v0.2. The LLM judge is Gemini Flash via Google AI Studio, with a pinned model ID, temperature 0.
+**Rationale:** A judge from a different model family than the generator avoids self-preference bias.
+**Status:** accepted
+
+## 15. Judge calibration
+**Decision:** Implemented in v0.2. Before the judge is trusted, the owner hand-grades a sample of about 15 answers, and the grader reports judge-human agreement.
+**Rationale:** An uncalibrated judge's scores cannot be distinguished from judge error.
 **Status:** accepted
 
 ## Leakage controls
