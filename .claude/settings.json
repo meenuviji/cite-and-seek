@@ -3,6 +3,7 @@
     "deny": [
       "Edit(/evaluation/questions/**)",
       "Edit(/evaluation/synthetic_incidents/**)",
+      "Read(/evaluation/synthetic_incidents/**)",
       "Read(/evaluation/questions/golden_set.json)",
       "Read(/evaluation/README.md)",
       "Edit(/evaluation/README.md)",

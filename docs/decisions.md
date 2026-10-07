@@ -11,6 +11,7 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 **Decision:** Original incident reports stay locked in `evaluation/synthetic_incidents/`. A committed script generates stripped copies into `corpus/incidents/` for indexing, keeping the original filenames (`SCN-xx.md`). Each copy keeps only `scenario`, `hypothetical_situation`, and `label`; `expected_evidence`, `expected_answer`, `real_file`, `real_function`, and `real_observable_behavior` are removed. The script's guard confirms exactly those 3 keys survive and no stripped key remains.
 **Rationale:** The originals contain expected answers and evidence; indexing them directly would leak ground truth into retrieval. A real incident ticket describes symptoms, not the verified root-cause location; the `real_*` fields are scoring ground truth.
 **Amended:** originally stripped only `expected_*` fields; `real_*` fields added before Commit A.
+**Review:** The script's warn-only check flagged SCN-04 and SCN-07, whose kept text contains a whole word from their `real_function` values. The owner reviewed both and judged them not to be leaks: in SCN-04 the match is the config class the developer edited, which is part of the reported symptom; in SCN-07 it is the generic word "migration". Neither names a root-cause function. The owner also confirmed that no golden question references an incident file (`grep -c "SCN-"` on `golden_set.json` returned 0), so stripping cannot affect golden answerability.
 **Status:** accepted
 
 ## 3. Incident scoring
@@ -56,6 +57,7 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 ## 11. Leave-one-out incident scoring
 **Decision:** In v0.2, when an incident scenario is scored, its own stripped copy in `corpus/incidents/` is excluded from retrieval.
 **Rationale:** The scenario query is drawn from the same incident text that is indexed, so the incident would otherwise retrieve itself and inflate the score.
+**Note:** SCN-07's `hypothetical_situation` hints at its cause, so it may score high in v0.2 even with leave-one-out.
 **Status:** accepted
 
 ## 12. Chunk sizes at or below 128 tokens
