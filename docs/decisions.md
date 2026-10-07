@@ -16,9 +16,10 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 **Status:** accepted
 
 ## 3. Incident scoring
-**Decision:** How the 10 incident scenarios are scored is deferred to v0.2.
-**Rationale:** Scoring belongs to the evaluation harness, and building it now would mean building ahead of the current checkpoint.
-**Status:** pending
+**Decision:** Implemented in v0.2. Each incident's query is its `scenario` plus `hypothetical_situation`. Retrieval is scored as a hit when the incident's normalized `real_file` (decision 13) is in the top k. The answer is scored by the LLM judge (decision 14) against `expected_answer`. Leave-one-out (decision 11) excludes every chunk whose source is the incident's own file, not a single chunk, so it stays correct if chunking changes; exclusion happens in the grader, and the retriever interface stays `search(question: str, k)` (L8). Incidents are reported as a separate set, kept out of the golden split (decision 17), and never used to choose between configurations.
+**Rationale:** A real ticket carries symptoms, so the query uses only the fields kept in the corpus copy. File-level exclusion keeps leave-one-out independent of chunk size, which v0.3 will vary. Ten scenarios are too few to steer configuration choices.
+**Amended:** originally deferred to v0.2; accepted with the owner's file-level exclusion change.
+**Status:** accepted
 
 ## 4. Embedding model
 **Decision:** `all-MiniLM-L6-v2` (sentence-transformers) is the naive baseline embedding model. Its input limit is 256 tokens.
@@ -77,14 +78,34 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 **Status:** accepted
 
 ## 14. LLM judge
-**Decision:** Implemented in v0.2. The LLM judge is Gemini Flash via Google AI Studio on the paid tier, with a pinned model ID, temperature 0.
-**Rationale:** A judge from a different model family than the generator avoids self-preference bias. Paid tier because the judge sees golden answers, and free-tier terms may allow inputs to be used for model improvement, which risks the test set entering future training data.
+**Decision:** Implemented in v0.2. The LLM judge is Gemini Flash via Google AI Studio on the free tier, with a pinned model ID, temperature 0. The judge client retries with backoff on rate-limit errors.
+**Rationale:** A judge from a different model family than the generator avoids self-preference bias. The free tier's data-use terms are not a material risk, because the golden set is already public in this repository. Free-tier rate limits are acceptable for judging, which is a small, infrequent workload.
+**Fallback:** If free-tier limits or terms become a problem, a local open-source judge via Ollama, behind the same judge interface. If the fallback is used, every run being compared is re-judged with the new judge and the calibration (decision 15) is repeated, so scores from different judges are never compared directly.
+**Known tradeoff:** The golden set is public, so future models may train on it. The closed-book baseline (L13) helps detect this: a rise in closed-book accuracy signals contamination.
+**Amended:** originally the paid tier, on the grounds that free-tier terms risked the test set entering training data. Reversed by the owner because the golden set is already public.
+**Model ID:** The newest stable Gemini Flash model, with no `preview`, `exp`, `lite`, `image`, `tts`, or `live` suffix. The owner confirms the exact ID from the models list on their account before v0.2 Commit D. The `google-genai` SDK is added at Commit D, not before. The owner adds `GEMINI_API_KEY` to `.env`.
+**Labels:** `correct`, `partial`, or `incorrect` against the reference answer, with a one-sentence reason written to `reports/` only. The judge prompt was approved as a draft; its final text is shown again at Commit D.
 **Status:** accepted
 
 ## 15. Judge calibration
-**Decision:** Implemented in v0.2. Before the judge is trusted, the owner hand-grades a sample of about 15 answers, and the grader reports judge-human agreement.
-**Rationale:** An uncalibrated judge's scores cannot be distinguished from judge error.
+**Decision:** Implemented in v0.2. Before the judge is trusted, the owner hand-grades a sample of about 15 answers, and the grader reports judge-human agreement as percent agreement plus the 3x3 confusion counts (judge label by owner label). Cohen's kappa is not a headline metric at this sample size.
+**Rationale:** An uncalibrated judge's scores cannot be distinguished from judge error. With about 15 items, kappa is unstable, while raw agreement and confusion counts show exactly where the judge and the owner differ.
 **Status:** accepted
+
+## 16. Retrieval metrics
+**Decision:** Implemented in v0.2. The headline retrieval metrics are file-level. recall@k is the fraction of a question's golden evidence files found among the top-k chunks' `source_path`s after normalization (decision 13), averaged over questions. hit@k is the fraction of questions with at least one golden evidence file in the top k. Both are reported at k = 1, 3, 5, and 10, alongside MRR; the pipeline's k stays 5. Line-level overlap is reported as a secondary metric only if the golden schema includes line ranges.
+**Rationale:** File-level matching is robust to chunk boundaries, which v0.3 will vary. Reporting several k values describes the retrieval curve without tuning k.
+**Status:** accepted
+
+## 17. Golden split and reporting
+**Decision:** Implemented in v0.2, before any tuning. A fixed-seed 80/20 split of golden question IDs into a tuning split and a held-out split, stratified by answerable vs unanswerable, and by category if the schema has one. The split (IDs only) is committed. v0.2 to v0.5 use the tuning split only; the held-out split stays untouched until v1.0. Incidents stay out of the split. Every rate is reported with raw counts and a 95% Wilson confidence interval.
+**Rationale:** Implements L10. The split leaves about 6 unanswerable questions for tuning and 2 held out, so one abstention moves the rate by roughly 17 or 50 points; raw counts and intervals keep small-sample rates from being over-read.
+**Status:** accepted
+
+## 18. Judge faithfulness gap
+**Decision:** Known gap, not yet addressed. The judge (decision 14) measures agreement with the reference answer, not faithfulness to the retrieved chunks, so unsupported extra claims are not penalized. Citation validity (v0.2) only checks that each citation points at a retrieved chunk, not that the chunk supports the claim.
+**Rationale:** Recorded so v0.2 correctness scores are not read as faithfulness scores. Addressing it is planned for a later checkpoint.
+**Status:** pending
 
 ## Leakage controls
 Each control lists its status and the point where it is implemented.
@@ -104,3 +125,5 @@ Each control lists its status and the point where it is implemented.
 | L11 | Each experiment's variants and target metric are preregistered in this file before running; every run is logged. | v0.3 onward | accepted |
 | L12 | The grader reports each dev query's maximum embedding similarity to any golden question, scores only. | v0.2 | accepted |
 | L13 | Closed-book baseline: the generation LLM answers golden questions with no retrieval; RAG gain is reported relative to it. | v0.2 | accepted |
+| L14 | Read deny on `/reports/**`. Per-question reports contain golden questions, answers, and judge reasons, so the agent cannot read them. | v0.2 Commit A | accepted |
+| L15 | Only aggregate metrics and run configuration are committed, to `results/`: no question text, answers, or judge reasons, and question IDs only where needed. | v0.2 | accepted |
