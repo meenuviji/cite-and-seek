@@ -22,7 +22,8 @@ PATH_MAP: tuple[tuple[str, str | None, str], ...] = (
     ("docs/LICENSE", "LICENSE", "upstream root listing"),
     ("docs/requirements.txt", "requirements.txt", "upstream root listing"),
     ("docs/architecture.md", None,
-     "no upstream counterpart: upstream has no docs/ folder, and README.md does not match"),
+     "derived from upstream README.md but a non-contiguous selection with added header "
+     "lines, so its line numbers do not map; kept corpus-only (decision 6)"),
     ("incidents/", None, "synthetic incident reports, no upstream counterpart"),
 )
 

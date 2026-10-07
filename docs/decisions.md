@@ -34,6 +34,7 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 **Rationale:** The size is set by the embedding model's 256-token input limit, not by tuning. Carrying both path forms lets recall@k be computed in v0.2 against golden paths written in either form (see decision 13).
 **Amended:** originally a single path relative to `corpus/`. The owner's check found golden paths in both upstream (`app/…`) and corpus-relative (`code/…`) forms.
 **Corpus coverage:** `app/database.py` and `app/redis_client.py` are imported by the code but absent from the corpus. The owner checked that the golden set references `database.py` 0 times and `redis_client` once, in an unanswerable question, so its absence is intended and correct.
+**Verification (upstream `aa86f56`):** All 24 files under `code/`, `tests/`, and `migrations/` are byte-identical to their mapped upstream files, so their line ranges are valid upstream line ranges. `docs/architecture.md` is derived from the upstream `README.md` (131 of its 142 non-blank lines appear verbatim in the README) but is a non-contiguous selection with 2 added header lines, so its line numbers do not correspond to `README.md`. It stays corpus-only (`source_path` = `docs/architecture.md`) to keep citations accurate. If golden evidence cites `README.md`, the v0.2 grader reports a failed mapping (decision 13), and the owner decides whether to add a file-level `README.md` → `docs/architecture.md` equivalence.
 **Status:** accepted
 
 ## 7. Smoke testing
