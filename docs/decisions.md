@@ -77,8 +77,8 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 **Status:** accepted
 
 ## 14. LLM judge
-**Decision:** Implemented in v0.2. The LLM judge is Gemini Flash via Google AI Studio, with a pinned model ID, temperature 0.
-**Rationale:** A judge from a different model family than the generator avoids self-preference bias.
+**Decision:** Implemented in v0.2. The LLM judge is Gemini Flash via Google AI Studio on the paid tier, with a pinned model ID, temperature 0.
+**Rationale:** A judge from a different model family than the generator avoids self-preference bias. Paid tier because the judge sees golden answers, and free-tier terms may allow inputs to be used for model improvement, which risks the test set entering future training data.
 **Status:** accepted
 
 ## 15. Judge calibration
