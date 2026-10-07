@@ -3,7 +3,16 @@
     "deny": [
       "Edit(/evaluation/questions/**)",
       "Edit(/evaluation/synthetic_incidents/**)",
-      "Read(/evaluation/questions/golden_set.json)"
+      "Read(/evaluation/questions/golden_set.json)",
+      "Read(/evaluation/README.md)",
+      "Edit(/evaluation/README.md)",
+      "Bash(git show)",
+      "Bash(git show *)",
+      "Bash(git -C * show *)",
+      "Bash(git cat-file *)",
+      "Bash(git -C * cat-file *)",
+      "Bash(git grep *)",
+      "Bash(git -C * grep *)"
     ]
   }
 }

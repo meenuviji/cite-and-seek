@@ -27,7 +27,10 @@ Objective: every component in the pipeline is justified by a measured result on 
 - Excluded: LangChain, LlamaIndex.
 
 ## Pending decisions (require human sign-off)
-Vector store, generation LLM, and LLM-as-judge model. When one arises, stop and present a comparison of industry-standard and free-tier options covering cost, latency, operational burden, and lock-in risk. Do not select unilaterally.
+Generation LLM and LLM-as-judge model (vector store resolved in decision 5). When one arises, stop and present a comparison of industry-standard and free-tier options covering cost, latency, operational burden, and lock-in risk. Do not select unilaterally.
+
+## Decision log
+@docs/decisions.md
 
 ## Roadmap
 - v0.0: Golden eval set, incident scenarios, evaluation README (complete)
