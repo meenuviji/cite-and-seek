@@ -3,8 +3,9 @@
 Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending decisions need human sign-off before work that depends on them.
 
 ## 1. Eval files locked; golden set unreadable to Claude
-**Decision:** `evaluation/questions/**` and `evaluation/synthetic_incidents/**` are locked by Edit deny rules in `.claude/settings.json`, and Read is denied on `evaluation/questions/golden_set.json`. Integrity is verified at every checkpoint with `git diff --stat v0.0 -- evaluation/questions evaluation/synthetic_incidents`, which must print nothing.
-**Rationale:** Deny rules stop accidental edits and keep golden content out of Claude's context, preventing leakage into tunable parameters. The git diff catches changes the deny rules cannot, such as scripts or git operations.
+**Decision:** `evaluation/questions/**` and `evaluation/synthetic_incidents/**` are locked by Edit deny rules in `.claude/settings.json`, and Read is denied on `evaluation/questions/golden_set.json`. Integrity is verified at every checkpoint, and before every commit, with `git diff --quiet v0.0 -- evaluation/questions evaluation/synthetic_incidents && echo PASS || echo FAIL`, which must print `PASS`. The owner runs the check, not the agent: before each commit, Claude asks the owner to run it and waits for the result.
+**Rationale:** Deny rules stop accidental edits and keep golden content out of Claude's context, preventing leakage into tunable parameters. The git diff catches changes the deny rules cannot, such as scripts or git operations. The owner runs it for separation of duties: the audited party does not run the audit.
+**Amended:** originally `git diff --stat …` with no stated runner. The agent's attempts to run it were denied, most likely because the Read deny rules on the locked paths cover `git diff` on them, which is consistent with this separation.
 **Status:** accepted
 
 ## 2. Stripped incident copies for the corpus
