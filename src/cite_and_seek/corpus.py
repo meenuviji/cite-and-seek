@@ -25,10 +25,10 @@ def load_tokenizer() -> PreTrainedTokenizerBase:
     return AutoTokenizer.from_pretrained(MODEL_NAME)
 
 
-def iter_corpus_files(root: Path) -> list[tuple[str, str]]:
-    """Return (corpus_path, text) for every non-hidden file under root, sorted."""
+def list_corpus_paths(root: Path) -> list[str]:
+    """Return the corpus_path of every non-hidden file under root, sorted."""
     root = root.resolve()
-    files = []
+    paths = []
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root)
         if any(part.startswith(".") for part in relative.parts) or not path.is_file():
@@ -36,8 +36,14 @@ def iter_corpus_files(root: Path) -> list[tuple[str, str]]:
         # L1: only files under corpus/ are indexed, including symlink targets.
         if not path.resolve().is_relative_to(root):
             raise ValueError(f"path resolves outside corpus: {path}")
-        files.append((relative.as_posix(), path.read_text(encoding="utf-8")))
-    return files
+        paths.append(relative.as_posix())
+    return paths
+
+
+def iter_corpus_files(root: Path) -> list[tuple[str, str]]:
+    """Return (corpus_path, text) for every non-hidden file under root, sorted."""
+    root = root.resolve()
+    return [(p, (root / p).read_text(encoding="utf-8")) for p in list_corpus_paths(root)]
 
 
 def chunk_text(corpus_path: str, text: str, tokenizer: PreTrainedTokenizerBase) -> list[Chunk]:

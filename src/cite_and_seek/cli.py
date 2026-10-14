@@ -81,8 +81,18 @@ def main() -> None:
         command.add_argument("question")
         command.add_argument("-k", type=positive_int, default=DEFAULT_K,
                              help=f"number of chunks to retrieve (default {DEFAULT_K})")
+    eval_parser = commands.add_parser("eval", help="evaluation harness (aggregates and IDs only)")
+    eval_commands = eval_parser.add_subparsers(dest="eval_command", required=True)
+    check_parser = eval_commands.add_parser(
+        "check", help="load golden set and incidents, normalize paths, report counts")
+    check_parser.add_argument("--final", action="store_true",
+                              help="use the held-out split (once, at v1.0)")
     args = parser.parse_args()
     if args.command == "search":
         search(args.question, args.k)
     elif args.command == "ask":
         ask(args.question, args.k)
+    elif args.command == "eval" and args.eval_command == "check":
+        from cite_and_seek.eval.check import run_check
+
+        run_check(args.final)

@@ -10,6 +10,7 @@ dependencies = [
     "anthropic>=1.12.0",
     "numpy>=2.5.3",
     "python-dotenv>=1.2.4",
+    "pyyaml>=6.0.3",
     "sentence-transformers>=6.1.0",
 ]
 
@@ -19,3 +20,12 @@ cite-and-seek = "cite_and_seek.cli:main"
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+# corpus/tests holds upstream test files that are corpus content, not project tests.
+testpaths = ["tests"]
