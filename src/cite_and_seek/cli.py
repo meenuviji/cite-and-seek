@@ -86,20 +86,35 @@ def main() -> None:
     for name, help_text in (
         ("check", "load golden set and incidents, normalize paths, report counts"),
         ("retrieval", "file-level hit@k, recall@k, MRR on the golden split"),
+        ("run", "generate answers for the golden split; abstention and citation checks"),
     ):
         eval_command = eval_commands.add_parser(name, help=help_text)
         eval_command.add_argument("--final", action="store_true",
                                   help="use the held-out split (once, at v1.0)")
     args = parser.parse_args()
-    if args.command == "search":
+    if args.command == "eval":
+        from cite_and_seek.eval.runinfo import DirtyTreeError
+
+        try:
+            run_eval(args)
+        except DirtyTreeError as error:
+            sys.exit(str(error))
+    elif args.command == "search":
         search(args.question, args.k)
     elif args.command == "ask":
         ask(args.question, args.k)
-    elif args.command == "eval" and args.eval_command == "check":
+
+
+def run_eval(args: argparse.Namespace) -> None:
+    if args.eval_command == "check":
         from cite_and_seek.eval.check import run_check
 
         run_check(args.final)
-    elif args.command == "eval" and args.eval_command == "retrieval":
+    elif args.eval_command == "retrieval":
         from cite_and_seek.eval.retrieval_eval import run_retrieval
 
         run_retrieval(args.final)
+    elif args.eval_command == "run":
+        from cite_and_seek.eval.run_stage import run_generation
+
+        run_generation(args.final)

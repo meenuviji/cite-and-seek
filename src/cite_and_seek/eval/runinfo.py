@@ -19,7 +19,34 @@ REPORTS_DIR = REPO_ROOT / "reports" / "runs"
 
 def _git(*args: str) -> str:
     return subprocess.run(["git", *args], cwd=REPO_ROOT, capture_output=True,
-                          text=True, check=True).stdout.strip()
+                          text=True, check=True).stdout.rstrip()  # rstrip: porcelain lines can start with a space
+
+
+# Official results wait here, uncommitted, for the final results commit; they are not code.
+ALLOWED_UNCOMMITTED_PREFIX = "results/"
+
+
+class DirtyTreeError(RuntimeError):
+    """Raised when an eval run would start from uncommitted code."""
+
+
+def dirty_paths(porcelain: str) -> list[str]:
+    """Paths from `git status --porcelain` that block a run (tracked or untracked)."""
+    paths = []
+    for line in porcelain.splitlines():
+        path = line[3:].split(" -> ")[-1].strip('"')
+        if not path.startswith(ALLOWED_UNCOMMITTED_PREFIX):
+            paths.append(path)
+    return paths
+
+
+def require_clean_tree() -> str:
+    """Refuse to run unless every change is committed, so each result traces to a commit."""
+    blocking = dirty_paths(_git("status", "--porcelain"))
+    if blocking:
+        raise DirtyTreeError(
+            f"refusing to run: {len(blocking)} uncommitted path(s): {blocking}. Commit first.")
+    return _git("rev-parse", "HEAD")
 
 
 def new_run_id(stage: str) -> str:
@@ -34,7 +61,8 @@ def run_config(**extra) -> dict:
     split = json.loads(SPLIT_PATH.read_text(encoding="utf-8"))
     return {
         "git_commit": _git("rev-parse", "HEAD"),
-        "git_dirty": bool(_git("status", "--porcelain", "--untracked-files=no")),
+        "clean_tree_enforced": True,
+        "git_dirty": bool(dirty_paths(_git("status", "--porcelain"))),
         "split": {"seed": split["seed"], "file_sha256": hashlib.sha256(SPLIT_PATH.read_bytes()).hexdigest(),
                   "golden_sha256": split["golden_sha256"]},
         "embedding_model": MODEL_NAME,

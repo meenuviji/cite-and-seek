@@ -13,7 +13,8 @@ from cite_and_seek.cli import build_retriever, DEFAULT_K
 from cite_and_seek.eval import CORPUS_ROOT
 from cite_and_seek.eval.golden import load_golden
 from cite_and_seek.eval.paths import PathNormalizer, normalize_all
-from cite_and_seek.eval.runinfo import REPORTS_DIR, new_run_id, run_config, write_results
+from cite_and_seek.eval.runinfo import (REPORTS_DIR, new_run_id, require_clean_tree,
+                                        run_config, write_results)
 from cite_and_seek.eval.stats import mean_with_ci, proportion
 
 KS = (1, 3, 5, 10)
@@ -41,6 +42,7 @@ def aggregate(scores: dict[str, dict[int, dict]]) -> dict:
 
 
 def run_retrieval(final: bool) -> None:
+    require_clean_tree()
     questions = [q for q in load_golden(final=final) if q.answerable]
     expected, report = normalize_all(PathNormalizer(CORPUS_ROOT),
                                      {q.id: q.expected_sources for q in questions})
