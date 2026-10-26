@@ -99,6 +99,8 @@ def main() -> None:
                                          help="run_id to judge (default: latest run)")
     split_commands["judge"].add_argument("--closed-book", action="store_true",
                                          help="default to the latest closed-book run")
+    split_commands["judge"].add_argument("--resume", metavar="JUDGE_RUN_ID",
+                                         help="continue an interrupted judge run with the same judge")
     eval_commands.add_parser("incidents", help="incident retrieval with leave-one-out by file")
     eval_commands.add_parser("dev-overlap", help="dev-query similarity to golden questions (L12)")
     args = parser.parse_args()
@@ -131,7 +133,7 @@ def run_eval(args: argparse.Namespace) -> None:
     elif args.eval_command == "judge":
         from cite_and_seek.eval.judge_stage import run_judge
 
-        run_judge(args.source_run, args.closed_book, args.final)
+        run_judge(args.source_run, args.closed_book, args.final, args.resume)
     elif args.eval_command == "incidents":
         from cite_and_seek.eval.incidents_eval import run_incidents
 

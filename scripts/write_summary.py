@@ -57,7 +57,8 @@ def table_rows(retrieval, run, judge, closed_judge, gain, incidents) -> list[str
             rows.append(f"| Correctness (uncalibrated judge) | {label.capitalize()}, of judged answers | "
                         f"{prop(jm['label_share_of_judged'][label])} |")
     else:
-        rows.append("| Correctness (uncalibrated judge) | Correct, of all answerable | pending |")
+        rows.append("| Correctness (uncalibrated judge) | Correct, of all answerable | "
+                    "pending: judge free-tier quota (decision 19) |")
     if closed_judge and gain:
         cm = closed_judge["metrics"]
         rows += [
@@ -172,6 +173,8 @@ def main() -> None:
         "and it is still pending.",
         "- **No faithfulness metric** (decision 18). The judge measures agreement with the reference answer; "
         "citation validity checks only that each citation points at a retrieved chunk.",
+        "- **Answer correctness pending** (decision 19). The judge's free-tier quota (20 requests per model) "
+        "stopped the run; `eval judge --resume` completes it with the same judge.",
         "- **Uncalibrated judge** (decision 19). No judge-human agreement has been measured yet.",
         "- **Closed-book baseline not run** (decision 19): the Anthropic API rejected the run "
         "(`organization_on_hold`). RAG gain is pending.",

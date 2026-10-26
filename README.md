@@ -71,7 +71,23 @@ Aggregates go to `results/` (committed). Per-question detail goes to `reports/` 
 
 Tuning split (42 questions: 36 answerable, 6 unanswerable). Proportions show count/n with a 95% Wilson interval; recall and MRR are means with a 95% bootstrap interval. Full table, configuration, and caveats: [`results/v0.2-summary.md`](results/v0.2-summary.md).
 
-RESULTS_TABLE
+| Area | Metric | Value (95% interval) |
+|---|---|---|
+| Retrieval | hit@5 (pipeline k) | 31/36 = 0.861 [0.71, 0.94] |
+| Retrieval | recall@5 | 0.838 [0.71, 0.94] |
+| Retrieval | MRR@5 | 0.508 [0.40, 0.61] |
+| Retrieval | hit@1 / hit@10 | 9/36 = 0.250 [0.14, 0.41] / 34/36 = 0.944 [0.82, 0.98] |
+| Abstention | Correct abstention (unanswerable) | 6/6 = 1.000 [0.61, 1.00] |
+| Abstention | False abstention (answerable) | 9/36 = 0.250 [0.14, 0.41] |
+| Abstention | Format violations (of abstentions) | 10/15 = 0.667 [0.42, 0.85] |
+| Citations | Citation validity (exact match to a retrieved chunk) | 35/51 = 0.686 [0.55, 0.80] |
+| Citations | Answers with an invalid citation | 11/27 = 0.407 [0.25, 0.59] |
+| Correctness | LLM-judge correctness (uncalibrated) | pending: judge free-tier quota |
+| Closed-book | Correctness and RAG gain | pending: API access |
+| Incidents (separate set) | hit@5, leave-one-out by file | 7/10 = 0.700 [0.40, 0.89] |
+| Cost / latency | Generation, 42 questions | $0.071 total; median 1.47 s per answer |
+
+What the baseline shows: retrieval usually finds the right file within five chunks but rarely ranks it first, the generator never answered an unanswerable question but abstained on a quarter of answerable ones, and about a third of its citations do not exactly match a retrieved chunk. Those are the targets for v0.3 onward.
 
 ## Evaluation integrity
 
@@ -82,6 +98,7 @@ The golden set and incident scenarios were frozen at `v0.0` and are protected by
 - **Small sample.** 42 tuning questions, of which only 6 are unanswerable: one abstention moves that rate by about 17 points, so intervals are wide and are always reported.
 - **Public test set.** The golden set is in this public repository, so future models may train on it; the closed-book baseline is the guard.
 - **No faithfulness metric.** The judge scores agreement with the reference answer, not whether each claim is supported by the retrieved chunks; citation validity checks only that a citation points at a retrieved chunk.
+- **Answer correctness pending.** The LLM judge's free-tier quota stopped the v0.2 grading run; it resumes with the same judge.
 - **Uncalibrated judge.** Judge-human agreement has not yet been measured, so judge-based numbers are labeled uncalibrated.
 - **Closed-book baseline pending** (API access issue during the v0.2 run); RAG gain over closed-book is not yet measured.
 - **Incident scenario SCN-07** describes a symptom that hints at its own cause, so its retrieval score is likely optimistic.

@@ -29,9 +29,21 @@ def latest_run_id(stage: str) -> str:
     return json.loads(runs[-1].read_text(encoding="utf-8"))["run_id"]
 
 
-def run_judge(source_run: str | None, closed_book: bool, final: bool) -> None:
+def judge_identity(source_run: str) -> dict:
+    """What must match for a resumed run to stay one consistent judgment."""
+    return {"source_run_id": source_run, "model": JUDGE_MODEL_ID,
+            "temperature": JUDGE_TEMPERATURE, "system_prompt_sha256": sha256_text(JUDGE_SYSTEM_PROMPT)}
+
+
+def run_judge(source_run: str | None, closed_book: bool, final: bool,
+              resume: str | None = None) -> None:
     require_clean_tree()
     require_env_key("GEMINI_API_KEY")
+    if resume:
+        meta = json.loads((REPORTS_DIR / resume / "judge_meta.json").read_text(encoding="utf-8"))
+        source_run = meta["source_run_id"]
+        if meta != judge_identity(source_run):
+            sys.exit(f"cannot resume {resume}: judge model, temperature, or prompt changed")
     source_run = source_run or latest_run_id("closedbook" if closed_book else "run")
     answers_path = REPORTS_DIR / source_run / "answers.jsonl"
     if not answers_path.is_file():
@@ -43,14 +55,26 @@ def run_judge(source_run: str | None, closed_book: bool, final: bool) -> None:
 
     n_answerable = sum(q.answerable for q in golden.values())
     judge = GeminiJudge()
-    run_id = new_run_id("judge")
+    run_id = resume or new_run_id("judge")
     detail_dir = REPORTS_DIR / run_id
     detail_dir.mkdir(parents=True, exist_ok=True)
+    judgments_path = detail_dir / "judgments.jsonl"
+    print(f"judge run {run_id} on {source_run} with {JUDGE_MODEL_ID} "
+          f"(resume with --resume {run_id})", flush=True)
     outcomes: dict[str, str] = {}
-    with (detail_dir / "judgments.jsonl").open("w", encoding="utf-8") as handle:
+    if resume:
+        # Keep what the interrupted run already judged (e.g. stopped by a free-tier quota).
+        for line in judgments_path.read_text(encoding="utf-8").splitlines():
+            done = json.loads(line)
+            outcomes[done["id"]] = done["outcome"]
+        print(f"resuming {run_id}: {len(outcomes)} already judged", flush=True)
+    else:
+        (detail_dir / "judge_meta.json").write_text(
+            json.dumps(judge_identity(source_run)), encoding="utf-8")
+    with judgments_path.open("a" if resume else "w", encoding="utf-8") as handle:
         for row in rows:
             q = golden[row["id"]]
-            if not q.answerable:
+            if not q.answerable or q.id in outcomes:
                 continue
             reason = None
             if row["error"]:

@@ -59,3 +59,13 @@ def test_closed_book_sends_question_only():
     assert sent["messages"][0]["content"] == "<question>\nWhat is X?\n</question>"
     assert sent["extra_body"] == {"temperature": 0.0}
     assert answer.abstained
+
+
+def test_judge_identity_pins_model_and_prompt():
+    from cite_and_seek.eval.judge import JUDGE_MODEL_ID
+    from cite_and_seek.eval.judge_stage import judge_identity
+
+    identity = judge_identity("run-x")
+    assert identity["source_run_id"] == "run-x"
+    assert identity["model"] == JUDGE_MODEL_ID
+    assert len(identity["system_prompt_sha256"]) == 64
