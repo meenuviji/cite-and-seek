@@ -1,0 +1,167 @@
+{
+  "run_id": "20261014T195419Z-run-1697183",
+  "stage": "run",
+  "split": "tuning",
+  "config": {
+    "git_commit": "16971833002cd5ee861e526ad3d52e715bada05f",
+    "clean_tree_enforced": true,
+    "git_dirty": false,
+    "split": {
+      "seed": 2026,
+      "file_sha256": "5467a93d30859bcd487038fc9258539678cc22bd2a49d8016931a85f3526996c",
+      "golden_sha256": "c500a308e3510d617561d035c8b90d7d7f004dfe3e108d127a3c6056c2a9acb5"
+    },
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "chunk_tokens": 200,
+    "retriever": "dense, numpy brute-force cosine",
+    "pipeline_k": 5,
+    "generation": {
+      "model": "claude-haiku-4-5-20251001",
+      "temperature": 0.0,
+      "max_tokens": 4096,
+      "system_prompt_sha256": "1a906f90db28017675ffb9fca40aeea6e205831c4f62e991b300089b62346f5e"
+    },
+    "versions": {
+      "python": "3.12.15",
+      "sentence-transformers": "6.1.0",
+      "numpy": "2.5.3",
+      "torch": "2.14.1",
+      "anthropic": "1.12.0"
+    },
+    "k": 5,
+    "price_per_mtok_usd": {
+      "input": 1.0,
+      "output": 5.0
+    }
+  },
+  "n_questions": 42,
+  "errors": {
+    "count": 0,
+    "ids": []
+  },
+  "metrics": {
+    "correct_abstention": {
+      "count": 6,
+      "n": 6,
+      "rate": 1.0,
+      "ci95": [
+        0.6096657120978346,
+        1.0
+      ],
+      "interval": "wilson"
+    },
+    "false_abstention": {
+      "count": 9,
+      "n": 36,
+      "rate": 0.25,
+      "ci95": [
+        0.13750477662994837,
+        0.4107045376672835
+      ],
+      "interval": "wilson"
+    },
+    "abstention_format_violation": {
+      "count": 10,
+      "n": 15,
+      "rate": 0.6666666666666666,
+      "ci95": [
+        0.41713547738519774,
+        0.8482367556028526
+      ],
+      "interval": "wilson",
+      "by_type": {
+        "multi_sentence": 10,
+        "embedded_marker": 3,
+        "multi_line": 3,
+        "has_citation": 4
+      }
+    },
+    "citation_validity": {
+      "count": 35,
+      "n": 51,
+      "rate": 0.6862745098039216,
+      "ci95": [
+        0.5497300046930566,
+        0.7967232153447456
+      ],
+      "interval": "wilson"
+    },
+    "answers_without_citations": {
+      "count": 2,
+      "n": 27,
+      "rate": 0.07407407407407407,
+      "ci95": [
+        0.020554654060988622,
+        0.23369592683023144
+      ],
+      "interval": "wilson"
+    },
+    "answers_with_invalid_citation": {
+      "count": 11,
+      "n": 27,
+      "rate": 0.4074074074074074,
+      "ci95": [
+        0.24514757074395552,
+        0.592732990319353
+      ],
+      "interval": "wilson"
+    }
+  },
+  "ids": {
+    "false_abstention": [
+      "Q001",
+      "Q011",
+      "Q015",
+      "Q021",
+      "Q031",
+      "Q033",
+      "Q034",
+      "Q035",
+      "Q041"
+    ],
+    "missed_abstention": [],
+    "format_violation": [
+      "Q001",
+      "Q003",
+      "Q009",
+      "Q011",
+      "Q015",
+      "Q021",
+      "Q022",
+      "Q034",
+      "Q035",
+      "Q041",
+      "Q047",
+      "Q048",
+      "Q050"
+    ],
+    "without_citations": [
+      "Q007",
+      "Q023"
+    ],
+    "invalid_citation": [
+      "Q003",
+      "Q012",
+      "Q016",
+      "Q019",
+      "Q020",
+      "Q022",
+      "Q032",
+      "Q036",
+      "Q037",
+      "Q038",
+      "Q039"
+    ]
+  },
+  "usage": {
+    "input_tokens": 47637,
+    "output_tokens": 4637,
+    "cost_usd": 0.070822
+  },
+  "latency_s": {
+    "mean": 1.5364401448806304,
+    "median": 1.4734264374856139,
+    "p90": 2.0863106670149136,
+    "scope": "generation call only, per question"
+  }
+}
