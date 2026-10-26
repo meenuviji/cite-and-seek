@@ -41,6 +41,7 @@ def run_judge(source_run: str | None, closed_book: bool, final: bool) -> None:
     if {r["id"] for r in rows} != golden.keys():
         sys.exit(f"{source_run} does not cover exactly the selected split")
 
+    n_answerable = sum(q.answerable for q in golden.values())
     judge = GeminiJudge()
     run_id = new_run_id("judge")
     detail_dir = REPORTS_DIR / run_id
@@ -65,6 +66,9 @@ def run_judge(source_run: str | None, closed_book: bool, final: bool) -> None:
                     outcome, reason = "judge_error", str(error)
             outcomes[q.id] = outcome
             handle.write(json.dumps({"id": q.id, "outcome": outcome, "reason": reason}) + "\n")
+            handle.flush()
+            # Progress: ID and label only (L7).
+            print(f"  [{len(outcomes)}/{n_answerable}] {q.id}: {outcome}", flush=True)
 
     n = len(outcomes)
     judged = [o for o in outcomes.values() if o in LABELS]

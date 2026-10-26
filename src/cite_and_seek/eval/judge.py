@@ -8,10 +8,12 @@ every number it produces is labeled as such.
 
 import json
 import random
+import sys
 import time
 from dataclasses import dataclass
 from typing import Protocol
 
+import httpx
 from google import genai
 from google.genai import errors, types
 
@@ -20,6 +22,8 @@ JUDGE_TEMPERATURE = 0.0
 LABELS = ("correct", "partial", "incorrect")
 MAX_ATTEMPTS = 6
 BASE_DELAY_S = 2.0
+# Without a timeout a stalled request waits forever; a timed-out request is retried.
+REQUEST_TIMEOUT_MS = 60_000
 
 JUDGE_SYSTEM_PROMPT = """\
 You grade a candidate answer to a question about a software codebase against a reference answer and a list of expected facts, written by an expert who verified them by reading the code. Judge only whether the candidate's factual content agrees with the reference.
@@ -74,7 +78,8 @@ def is_retryable(error: errors.APIError) -> bool:
 
 class GeminiJudge:
     def __init__(self, client: genai.Client | None = None, model: str = JUDGE_MODEL_ID) -> None:
-        self.client = client or genai.Client()
+        self.client = client or genai.Client(
+            http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))
         self.model = model
         self.config = types.GenerateContentConfig(
             temperature=JUDGE_TEMPERATURE,
@@ -91,11 +96,16 @@ class GeminiJudge:
                 response = self.client.models.generate_content(
                     model=self.model, contents=contents, config=self.config)
                 return parse_verdict(response.text)
-            except errors.APIError as error:
-                if not is_retryable(error) or attempt == MAX_ATTEMPTS - 1:
+            except (errors.APIError, httpx.TimeoutException) as error:
+                retryable = isinstance(error, httpx.TimeoutException) or is_retryable(error)
+                if not retryable or attempt == MAX_ATTEMPTS - 1:
                     raise
                 # Exponential backoff with jitter, for free-tier rate limits (decision 14).
-                time.sleep(BASE_DELAY_S * 2 ** attempt + random.uniform(0, 1))
+                delay = BASE_DELAY_S * 2 ** attempt + random.uniform(0, 1)
+                code = getattr(error, "code", "timeout")
+                print(f"    judge: {code}, retry {attempt + 1}/{MAX_ATTEMPTS - 1} in {delay:.0f}s",
+                      file=sys.stderr, flush=True)
+                time.sleep(delay)
         raise JudgeError("unreachable")
 
 

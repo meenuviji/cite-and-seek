@@ -114,6 +114,19 @@ Decisions agreed for Cite & Seek. Status is `accepted` or `pending`; pending dec
 **Rationale:** Recorded so v0.2 correctness scores are not read as faithfulness scores. Addressing it is planned for a later checkpoint.
 **Status:** pending
 
+## 19. v0.2 submission-sprint deviations
+**Decision:** To finish v0.2 in one session, the owner approved these departures from the rules above. Each applies to v0.2 only.
+- **One integrity check before the final push**, instead of one before every commit (decision 1). The check is cumulative against `v0.0`, so a single `PASS` before the push covers every v0.2 commit.
+- **No Gate 3 wait.** The final judge prompt was shown and then run without waiting for approval.
+- **Judge uncalibrated.** The owner's hand-grading (decision 15) was not done. Every judge-based number is labeled "uncalibrated" wherever it appears.
+- **Incident scoring limited to retrieval** (decision 3). Incident answers were not generated or judged.
+- **Commits F to I landed as one commit** instead of one per step.
+- **Merged into `main` directly with a merge commit**, instead of through a pull request.
+- **Dev-query overlap (L12) compared against tuning-split questions only**, consistent with the tuning-only rule for v0.2.
+- **Closed-book baseline (L13) not run.** The Anthropic API rejected the closed-book run with `organization_on_hold` ("This organization has been disabled"). The RAG answers had already been generated on 2026-10-14. RAG gain over closed-book is pending until API access is restored.
+**Rationale:** Submission deadline. The deviations are recorded so every v0.2 number is read with its actual evidence standard.
+**Status:** accepted
+
 ## Leakage controls
 Each control lists its status and the point where it is implemented.
 
