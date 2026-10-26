@@ -83,14 +83,24 @@ def main() -> None:
                              help=f"number of chunks to retrieve (default {DEFAULT_K})")
     eval_parser = commands.add_parser("eval", help="evaluation harness (aggregates and IDs only)")
     eval_commands = eval_parser.add_subparsers(dest="eval_command", required=True)
+    split_commands = {}
     for name, help_text in (
         ("check", "load golden set and incidents, normalize paths, report counts"),
         ("retrieval", "file-level hit@k, recall@k, MRR on the golden split"),
         ("run", "generate answers for the golden split; abstention and citation checks"),
+        ("judge", "grade a saved run's answers with the LLM judge (uncalibrated in v0.2)"),
     ):
-        eval_command = eval_commands.add_parser(name, help=help_text)
-        eval_command.add_argument("--final", action="store_true",
-                                  help="use the held-out split (once, at v1.0)")
+        split_commands[name] = eval_commands.add_parser(name, help=help_text)
+        split_commands[name].add_argument("--final", action="store_true",
+                                          help="use the held-out split (once, at v1.0)")
+    split_commands["run"].add_argument("--closed-book", action="store_true",
+                                       help="closed-book baseline: no retrieved chunks (L13)")
+    split_commands["judge"].add_argument("--run", dest="source_run",
+                                         help="run_id to judge (default: latest run)")
+    split_commands["judge"].add_argument("--closed-book", action="store_true",
+                                         help="default to the latest closed-book run")
+    eval_commands.add_parser("incidents", help="incident retrieval with leave-one-out by file")
+    eval_commands.add_parser("dev-overlap", help="dev-query similarity to golden questions (L12)")
     args = parser.parse_args()
     if args.command == "eval":
         from cite_and_seek.eval.runinfo import DirtyTreeError
@@ -117,4 +127,16 @@ def run_eval(args: argparse.Namespace) -> None:
     elif args.eval_command == "run":
         from cite_and_seek.eval.run_stage import run_generation
 
-        run_generation(args.final)
+        run_generation(args.final, args.closed_book)
+    elif args.eval_command == "judge":
+        from cite_and_seek.eval.judge_stage import run_judge
+
+        run_judge(args.source_run, args.closed_book, args.final)
+    elif args.eval_command == "incidents":
+        from cite_and_seek.eval.incidents_eval import run_incidents
+
+        run_incidents()
+    elif args.eval_command == "dev-overlap":
+        from cite_and_seek.eval.dev_overlap import run_dev_overlap
+
+        run_dev_overlap()

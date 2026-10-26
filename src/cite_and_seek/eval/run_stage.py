@@ -6,7 +6,9 @@ gets aggregates and IDs only (L7, L15).
 """
 
 import json
+import os
 import statistics
+import sys
 import time
 
 from dotenv import load_dotenv
@@ -16,28 +18,37 @@ from cite_and_seek.eval import REPO_ROOT
 from cite_and_seek.eval.answer_checks import abstention_violations, check_citations
 from cite_and_seek.eval.golden import load_golden
 from cite_and_seek.eval.runinfo import (REPORTS_DIR, new_run_id, require_clean_tree,
-                                        run_config, write_results)
+                                        run_config, sha256_text, write_results)
 from cite_and_seek.eval.stats import proportion
-from cite_and_seek.generation import GenerationError, HaikuGenerator
+from cite_and_seek.generation import (CLOSED_BOOK_SYSTEM_PROMPT, ClosedBookHaikuGenerator,
+                                      GenerationError, HaikuGenerator)
 
 # Anthropic list price for claude-haiku-4-5, USD per million tokens, as of 2026-10.
 PRICE_PER_MTOK = {"input": 1.00, "output": 5.00}
 
 
-def run_generation(final: bool) -> None:
-    require_clean_tree()
+def require_env_key(name: str) -> None:
+    """Fail before any work if an API key is missing; never prints the value."""
     load_dotenv(REPO_ROOT / ".env")
+    if not os.environ.get(name):
+        sys.exit(f"{name} is not set (expected in .env at the repository root)")
+
+
+def run_generation(final: bool, closed_book: bool = False) -> None:
+    require_clean_tree()
+    require_env_key("ANTHROPIC_API_KEY")
     questions = load_golden(final=final)
-    retriever = build_retriever()
-    generator = HaikuGenerator()
-    run_id = new_run_id("run")
+    # Closed-book (L13) retrieves nothing; the RAG run uses the v0.1 pipeline.
+    retriever = None if closed_book else build_retriever()
+    generator = ClosedBookHaikuGenerator() if closed_book else HaikuGenerator()
+    run_id = new_run_id("closedbook" if closed_book else "run")
     detail_dir = REPORTS_DIR / run_id
     detail_dir.mkdir(parents=True, exist_ok=True)
 
     rows = []
     with (detail_dir / "answers.jsonl").open("w", encoding="utf-8") as handle:
         for q in questions:
-            hits = retriever.search(q.question, DEFAULT_K)
+            hits = [] if closed_book else retriever.search(q.question, DEFAULT_K)
             start = time.perf_counter()
             try:
                 answer = generator.generate(q.question, hits)
@@ -60,8 +71,12 @@ def run_generation(final: bool) -> None:
             rows.append(row)
             handle.write(json.dumps(row) + "\n")
 
-    payload = {"run_id": run_id, "stage": "run", "split": "held_out" if final else "tuning",
-               "config": run_config(k=DEFAULT_K, price_per_mtok_usd=PRICE_PER_MTOK),
+    extra = ({"closed_book": True, "k": 0,
+              "closed_book_system_prompt_sha256": sha256_text(CLOSED_BOOK_SYSTEM_PROMPT)}
+             if closed_book else {"closed_book": False, "k": DEFAULT_K})
+    payload = {"run_id": run_id, "stage": "closedbook" if closed_book else "run",
+               "split": "held_out" if final else "tuning",
+               "config": run_config(price_per_mtok_usd=PRICE_PER_MTOK, **extra),
                **summarize(rows)}
     path = write_results(run_id, payload)
     print_summary(payload)

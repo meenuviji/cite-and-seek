@@ -73,7 +73,7 @@ def run_config(**extra) -> dict:
                        "system_prompt_sha256": sha256_text(SYSTEM_PROMPT)},
         "versions": {"python": platform.python_version(),
                      **{name: version(name) for name in
-                        ("sentence-transformers", "numpy", "torch", "anthropic")}},
+                        ("sentence-transformers", "numpy", "torch", "anthropic", "google-genai")}},
         **extra,
     }
 

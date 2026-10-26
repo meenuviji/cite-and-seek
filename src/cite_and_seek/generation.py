@@ -64,14 +64,17 @@ class HaikuGenerator:
         self.client = client or anthropic.Anthropic()
 
     def generate(self, question: str, hits: list[Hit]) -> Answer:
+        return self._complete(SYSTEM_PROMPT, build_user_message(question, hits))
+
+    def _complete(self, system: str, user_message: str) -> Answer:
         response = self.client.messages.create(
             model=MODEL_ID,
             max_tokens=MAX_TOKENS,
             # anthropic 1.x dropped temperature from the signature; Haiku 4.5 still
             # honours it in the request body, and decision 9 requires it.
             extra_body={"temperature": TEMPERATURE},
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": build_user_message(question, hits)}],
+            system=system,
+            messages=[{"role": "user", "content": user_message}],
         )
         if response.stop_reason != "end_turn":
             raise GenerationError(
@@ -87,3 +90,21 @@ class HaikuGenerator:
             output_tokens=response.usage.output_tokens,
             request_id=response._request_id,
         )
+
+
+# Closed-book baseline (L13): same model and settings, no retrieved chunks. The
+# prompt is SYSTEM_PROMPT without the chunk and citation rules.
+CLOSED_BOOK_SYSTEM_PROMPT = """\
+You answer questions about the source code and documentation of an ecommerce API. No code or documentation is provided with the question.
+
+Rules:
+1. If you do not know the answer, or answering would require guessing, reply with exactly one line and nothing else:
+ABSTAIN: <one sentence stating what information is missing>
+Do not combine an abstention with a partial answer.
+2. Otherwise, answer directly and concisely."""
+
+
+class ClosedBookHaikuGenerator(HaikuGenerator):
+    def generate(self, question: str, hits: list[Hit]) -> Answer:
+        # hits are ignored by design: the baseline sees the question only.
+        return self._complete(CLOSED_BOOK_SYSTEM_PROMPT, f"<question>\n{question}\n</question>")
