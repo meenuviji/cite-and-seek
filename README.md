@@ -28,7 +28,7 @@ question ──► embed ──► top-k chunks (k = 5) ──► Claude Haiku 4
 - **Paths**: each chunk carries its corpus path and its upstream repository path; citations use the upstream path. The mapping is an explicit table derived from the code's imports and the upstream Alembic config, and 24 of the corpus files are verified byte-identical to upstream, so cited line ranges are real upstream line ranges.
 - **Retrieval**: `all-MiniLM-L6-v2` sentence embeddings with exact cosine search behind `Embedder`, `VectorIndex`, and `Retriever` interfaces.
 - **Generation**: `claude-haiku-4-5-20251001` at temperature 0 with a zero-shot prompt that answers only from the retrieved chunks, cites each claim, and abstains with a fixed `ABSTAIN:` marker so abstention is detected by a string check, not a model call.
-- **Evaluation harness** (`src/cite_and_seek/eval/`): split loader, path normalization, retrieval metrics, answer checks, and an LLM judge (`gemini-3.8-flash`, temperature 0, JSON-schema output) from a different model family than the generator.
+- **Evaluation harness** (`src/cite_and_seek/eval/`): split loader, path normalization, retrieval metrics, answer checks, and an LLM judge (`gemini-3.6-flash`, temperature 0, JSON-schema output) from a different model family than the generator.
 
 ## How to run
 

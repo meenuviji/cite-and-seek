@@ -17,7 +17,7 @@ import httpx
 from google import genai
 from google.genai import errors, types
 
-JUDGE_MODEL_ID = "gemini-3.8-flash"
+JUDGE_MODEL_ID = "gemini-3.6-flash"  # 3.8 and 3.7 were unavailable (503) on 2026-10-26; decision 19
 JUDGE_TEMPERATURE = 0.0
 LABELS = ("correct", "partial", "incorrect")
 MAX_ATTEMPTS = 6
