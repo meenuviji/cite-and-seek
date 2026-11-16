@@ -74,6 +74,9 @@ def run_retrieval(final: bool) -> None:
         "n_expected_paths": report.paths,
         "metrics": metrics,
         "ids_missed_at_10": sorted(i for i, per_k in scores.items() if not per_k[10]["hit"]),
+        # IDs only (L15); used for diagnostics such as false abstentions despite a hit.
+        "ids_missed_at_k": {str(k): sorted(i for i, per_k in scores.items() if not per_k[k]["hit"])
+                            for k in KS},
     }
     path = write_results(run_id, payload)
 

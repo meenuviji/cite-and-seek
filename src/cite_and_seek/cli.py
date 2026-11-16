@@ -103,6 +103,13 @@ def main() -> None:
                                          help="continue an interrupted judge run with the same judge")
     eval_commands.add_parser("incidents", help="incident retrieval with leave-one-out by file")
     eval_commands.add_parser("dev-overlap", help="dev-query similarity to golden questions (L12)")
+    calibrate = eval_commands.add_parser("calibrate", help="blind owner grading for judge calibration")
+    calibrate_commands = calibrate.add_subparsers(dest="calibrate_command", required=True)
+    grade = calibrate_commands.add_parser(
+        "grade", help="owner labels generated answers one at a time (prints golden content)")
+    grade.add_argument("--run", dest="source_run", help="generation run_id (default: latest run)")
+    score = calibrate_commands.add_parser("score", help="judge-owner agreement on owner-labeled IDs")
+    score.add_argument("--judge-run", required=True, help="finished judge run_id")
     args = parser.parse_args()
     if args.command == "eval":
         from cite_and_seek.eval.runinfo import DirtyTreeError
@@ -142,3 +149,10 @@ def run_eval(args: argparse.Namespace) -> None:
         from cite_and_seek.eval.dev_overlap import run_dev_overlap
 
         run_dev_overlap()
+    elif args.eval_command == "calibrate":
+        from cite_and_seek.eval.calibrate import run_grade, run_score
+
+        if args.calibrate_command == "grade":
+            run_grade(args.source_run)
+        else:
+            run_score(args.judge_run)

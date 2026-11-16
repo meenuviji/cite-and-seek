@@ -30,6 +30,17 @@ def mean(m: dict) -> str:
     return f"{m['mean']:.3f} [{m['ci95'][0]:.2f}, {m['ci95'][1]:.2f}] (n={m['n']})"
 
 
+def false_abstention_hits(retrieval: dict, run: dict) -> list[str]:
+    """False abstentions where retrieval had a correct file in the top 5 (IDs only)."""
+    if "ids_missed_at_k" not in retrieval:
+        return []
+    false_abstentions = run["ids"]["false_abstention"]
+    missed = set(retrieval["ids_missed_at_k"]["5"])
+    hits = [i for i in false_abstentions if i not in missed]
+    return [f"- False abstentions with a correct file in the top 5 (hit@5): "
+            f"{len(hits)}/{len(false_abstentions)}: {', '.join(hits) or 'none'}"]
+
+
 def table_rows(retrieval, run, judge, closed_judge, gain, incidents) -> list[str]:
     rows = ["| Area | Metric | Value (95% interval) |", "|---|---|---|"]
     for k in ("1", "3", "5", "10"):
@@ -118,6 +129,7 @@ def main() -> None:
         "",
         f"- Retrieval misses at k = 10: {', '.join(retrieval['ids_missed_at_10']) or 'none'}",
         f"- False abstentions: {', '.join(run['ids']['false_abstention']) or 'none'}",
+        *false_abstention_hits(retrieval, run),
         f"- Missed abstentions: {', '.join(run['ids']['missed_abstention']) or 'none'}",
         f"- Answers with an invalid citation: {', '.join(run['ids']['invalid_citation']) or 'none'}",
         f"- Answers with no citation: {', '.join(run['ids']['without_citations']) or 'none'}",
